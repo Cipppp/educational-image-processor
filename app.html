@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educational Image Processor</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar (mobile: hamburger menu) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Educational Image Processor</h2>
+                <button id="close-sidebar" class="close-sidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#" data-section="image-processor"><i class="fas fa-image"></i> Procesare Imagine</a></li>
+                    <li><a href="#" data-section="learning-resources"><i class="fas fa-book"></i> Materiale Educaționale</a></li>
+                    <li><a href="#" data-section="saved-results"><i class="fas fa-save"></i> Rezultate Salvate</a></li>
+                    <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> Setări</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-button"><i class="fas fa-sign-out-alt"></i> Deconectare</button>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <!-- Top navigation bar -->
+            <header class="top-nav">
+                <button id="toggle-sidebar" class="toggle-sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 id="page-title">Procesare Imagine</h1>
+                <div class="user-info">
+                    <span>Demo User</span>
+                    <div class="user-avatar">
+                        <img src="https://api.dicebear.com/7.x/initials/svg?seed=DU" alt="User Avatar">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content sections -->
+            <div class="content-wrapper">
+                <!-- Image processor section -->
+                <section id="image-processor" class="content-section active">
+                    <div class="section-header">
+                        <h2>Procesare Imagine - Metoda Sobel</h2>
+                        <div class="tooltip">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="tooltip-text">Operatorul Sobel este folosit pentru detectarea marginilor într-o imagine, calculând gradientul intensității imaginii în fiecare punct.</span>
+                        </div>
+                    </div>
+
+                    <div class="image-source-controls">
+                        <h3>Sursa Imaginii</h3>
+                        <div class="source-options">
+                            <label class="radio-container">
+                                <input type="radio" name="image-source" id="dog-api" checked>
+                                <span class="radio-label">API Dog</span>
+                            </label>
+                            <label class="radio-container">
+                                <input type="radio" name="image-source" id="local-file">
+                                <span class="radio-label">Fișier Local</span>
+                            </label>
+                        </div>
+                        
+                        <div id="dog-api-controls" class="source-specific-controls">
+                            <button id="fetch-dog-button" class="primary-button">
+                                <i class="fas fa-dog"></i> Încarcă o imagine cu un câine
+                            </button>
+                        </div>
+                        
+                        <div id="local-file-controls" class="source-specific-controls" style="display: none;">
+                            <div class="file-upload">
+                                <label for="image-upload" class="file-upload-label">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Selectează o imagine</span>
+                                </label>
+                                <input type="file" id="image-upload" accept="image/*">
+                                <p class="file-name" id="file-name">Niciun fișier selectat</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="image-processor-container">
+                        <div class="image-container">
+                            <div class="image-wrapper">
+                                <div id="original-image-container">
+                                    <h3>Imagine Originală</h3>
+                                    <div class="canvas-container">
+                                        <canvas id="original-canvas"></canvas>
+                                        <div class="placeholder" id="original-placeholder">
+                                            <i class="fas fa-image"></i>
+                                            <p>Selectează o imagine pentru a începe</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="image-wrapper">
+                                <div id="processed-image-container">
+                                    <h3>Imagine Procesată</h3>
+                                    <div class="canvas-container">
+                                        <canvas id="processed-canvas"></canvas>
+                                        <div class="placeholder" id="processed-placeholder">
+                                            <i class="fas fa-image"></i>
+                                            <p>Imaginea procesată va apărea aici</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="controls-container">
+                            <div class="processing-controls">
+                                <h3>Parametri & Controale</h3>
+                                
+                                <div class="control-group">
+                                    <label for="threshold">Prag de Sensibilitate</label>
+                                    <div class="slider-container">
+                                        <input type="range" id="threshold" min="0" max="255" value="50" class="slider">
+                                        <div class="slider-value">
+                                            <span id="threshold-value">50</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="checkbox-group">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="show-gradients">
+                                        <span class="checkbox-label">Arată gradienții</span>
+                                    </label>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Afișează gradienții X și Y direct, în loc de marginile detectate.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="checkbox-group">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="grayscale-first" checked>
+                                        <span class="checkbox-label">Convertește întâi la grayscale</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="button-group">
+                                    <button id="process-button" class="primary-button" disabled>
+                                        <i class="fas fa-cogs"></i> Procesează Imaginea
+                                    </button>
+                                    <button id="reset-button" class="secondary-button" disabled>
+                                        <i class="fas fa-undo"></i> Resetează
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="results-panel">
+                                <h3>Rezultate</h3>
+                                <div class="result-item">
+                                    <span>Timp de procesare:</span>
+                                    <span id="processing-time">-</span>
+                                </div>
+                                <div class="button-group">
+                                    <button id="download-button" class="primary-button" disabled>
+                                        <i class="fas fa-download"></i> Descarcă Rezultatul
+                                    </button>
+                                    <button id="save-results-button" class="secondary-button" disabled>
+                                        <i class="fas fa-save"></i> Salvează Rezultatele
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="algorithm-info collapsible">
+                        <div class="collapsible-header">
+                            <h3>Despre Algoritmul Sobel</h3>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="theory-content">
+                                <p>Operatorul Sobel este o tehnică de procesare a imaginilor utilizată pentru detectarea marginilor. Acesta se bazează pe calculul gradientului intensității imaginii la fiecare pixel, care indică direcția celei mai mari schimbări de intensitate și magnitudinea acesteia.</p>
+                                
+                                <div class="info-section">
+                                    <h4>Kernelurile Sobel</h4>
+                                    <p>Operatorul Sobel utilizează două kerneluri de convoluție 3x3 pentru a calcula aproximări ale derivatelor - unul pentru schimbările orizontale (S<sub>x</sub>) și unul pentru schimbările verticale (S<sub>y</sub>):</p>
+                                    
+                                    <div class="kernel-container">
+                                        <div class="kernel">
+                                            <p>S<sub>x</sub> = </p>
+                                            <table>
+                                                <tr>
+                                                    <td>-1</td>
+                                                    <td>0</td>
+                                                    <td>1</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>-2</td>
+                                                    <td>0</td>
+                                                    <td>2</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>-1</td>
+                                                    <td>0</td>
+                                                    <td>1</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="kernel">
+                                            <p>S<sub>y</sub> = </p>
+                                            <table>
+                                                <tr>
+                                                    <td>-1</td>
+                                                    <td>-2</td>
+                                                    <td>-1</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                    <td>0</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>1</td>
+                                                    <td>2</td>
+                                                    <td>1</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-section">
+                                    <h4>Calculul Gradientului</h4>
+                                    <p>Pentru fiecare pixel din imagine:</p>
+                                    <ol>
+                                        <li>Se calculează gradientul pe direcția X (G<sub>x</sub>) aplicând kernelul S<sub>x</sub></li>
+                                        <li>Se calculează gradientul pe direcția Y (G<sub>y</sub>) aplicând kernelul S<sub>y</sub></li>
+                                        <li>Se determină magnitudinea gradientului: G = √(G<sub>x</sub>² + G<sub>y</sub>²)</li>
+                                        <li>Opțional, se poate calcula direcția gradientului: θ = arctan(G<sub>y</sub> / G<sub>x</sub>)</li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="info-section">
+                                    <h4>Aplicații</h4>
+                                    <p>Operatorul Sobel este folosit în:</p>
+                                    <ul>
+                                        <li>Detectarea marginilor în aplicații de procesare de imagine</li>
+                                        <li>Recunoașterea formelor și obiectelor</li>
+                                        <li>Segmentarea imaginilor</li>
+                                        <li>Diverse aplicații de computer vision</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="info-section">
+                                    <h4>Implementare în Aplicație</h4>
+                                    <p>În această aplicație, implementăm Sobel ca algoritm low-level, procesând imagine pixel cu pixel, fără a utiliza funcții built-in de procesare de imagine. Puteți experimenta cu parametrii pentru a vedea cum influențează rezultatul final.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Learning resources section -->
+                <section id="learning-resources" class="content-section">
+                    <div class="section-header">
+                        <h2>Materiale Educaționale</h2>
+                    </div>
+                    <div class="resources-list">
+                        <div class="resource-card">
+                            <div class="resource-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="resource-content">
+                                <h3>Fundamentele Procesării de Imagine</h3>
+                                <p>Introducere în conceptele de bază ale procesării imaginilor digitale.</p>
+                                <a href="#" class="resource-link">Citește articolul</a>
+                            </div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div class="resource-content">
+                                <h3>Tutorial: Operatori de Detecție a Marginilor</h3>
+                                <p>Comparație între operatorii Sobel, Prewitt și alte metode de detecție a marginilor.</p>
+                                <a href="#" class="resource-link">Vizionează tutorialul</a>
+                            </div>
+                        </div>
+                        <div class="resource-card">
+                            <div class="resource-icon">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <div class="resource-content">
+                                <h3>Implementarea Algoritmilor de Procesare</h3>
+                                <p>Exemple de cod și explicații pentru algoritmi de procesare a imaginilor.</p>
+                                <a href="#" class="resource-link">Explorează codul</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Saved results section -->
+                <section id="saved-results" class="content-section">
+                    <div class="section-header">
+                        <h2>Rezultate Salvate</h2>
+                    </div>
+                    <div class="saved-results-container">
+                        <div class="empty-state">
+                            <i class="fas fa-save"></i>
+                            <p>Nu există rezultate salvate încă. Procesează o imagine și salvează rezultatul pentru a-l vedea aici.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings section -->
+                <section id="settings" class="content-section">
+                    <div class="section-header">
+                        <h2>Setări</h2>
+                    </div>
+                    <div class="settings-container">
+                        <div class="settings-group">
+                            <h3>Preferințe Generale</h3>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="dark-mode">Mod Întunecat</label>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="switch">
+                                        <input type="checkbox" id="dark-mode">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="save-history">Salvează Istoricul de Procesare</label>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="switch">
+                                        <input type="checkbox" id="save-history" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <h3>Preferințe Avansate</h3>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="image-quality">Calitate Imagine la Salvare</label>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="image-quality">
+                                        <option value="high">Înaltă</option>
+                                        <option value="medium" selected>Medie</option>
+                                        <option value="low">Joasă</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="max-history">Număr maxim de rezultate salvate</label>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" id="max-history" min="1" max="50" value="10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast">
+        <div class="toast-content">
+            <i id="toast-icon" class="fas fa-check-circle"></i>
+            <div class="toast-message" id="toast-message"></div>
+        </div>
+        <div class="toast-progress" id="toast-progress"></div>
+    </div>
+
+    <!-- Modal for saving results -->
+    <div id="save-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Salvează Rezultatele</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="result-name">Numele Rezultatului</label>
+                    <input type="text" id="result-name" placeholder="Introdu un nume pentru acest rezultat">
+                </div>
+                <div class="form-group">
+                    <label for="result-description">Descriere (opțional)</label>
+                    <textarea id="result-description" placeholder="Adaugă o descriere pentru acest rezultat"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-save" class="secondary-button">Anulează</button>
+                <button id="confirm-save" class="primary-button">Salvează</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
