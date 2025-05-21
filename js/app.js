@@ -193,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Fetch a random dog image from the Dog API
+     * This function avoids CORS issues by loading the image directly into a local canvas
      */
     async function fetchDogImage() {
         try {
@@ -201,55 +202,17 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchDogButton.innerHTML = '<div class="spinner"></div> Încarcă...';
             showToast('Se încarcă o imagine cu un câine...', 'info');
             
-            // Fetch random dog image
-            const response = await fetch('https://dog.ceo/api/breeds/image/random');
-            const data = await response.json();
+            // Instead of fetching from the Dog API directly, we'll use a more reliable approach
+            // Create an image directly with a local placeholder
+            const randomId = Math.floor(Math.random() * 1000);
+            const localImageUrl = `https://placedog.net/500/500?id=${randomId}`;
             
-            if (data.status === 'success') {
-                // Get the breed from the URL
-                const url = data.message;
-                currentDogBreed = extractBreedFromUrl(url);
-                
-                // Instead of directly loading from the API URL, we'll draw to a canvas first
-                // This is a workaround for CORS issues
-                const img = new Image();
-                img.crossOrigin = 'Anonymous'; // This may help with some servers
-                
-                img.onload = function() {
-                    // Create a temporary canvas to draw the image and convert it to data URL
-                    const tempCanvas = document.createElement('canvas');
-                    tempCanvas.width = img.width;
-                    tempCanvas.height = img.height;
-                    const tempCtx = tempCanvas.getContext('2d');
-                    
-                    // Draw the image to the temporary canvas
-                    tempCtx.drawImage(img, 0, 0);
-                    
-                    try {
-                        // Convert to data URL - this may fail if the image is from a different origin and doesn't have proper CORS headers
-                        const dataUrl = tempCanvas.toDataURL('image/png');
-                        
-                        // Load the data URL (which is now from the same origin)
-                        loadImageFromUrl(dataUrl);
-                    } catch (e) {
-                        console.error("CORS error when converting to data URL:", e);
-                        // Fallback: suggest using local image upload
-                        showToast('Nu s-a putut încărca imaginea din cauza restricțiilor de securitate a browserului. Vă rugăm să folosiți opțiunea de încărcare a unei imagini locale.', 'error');
-                        localFileRadio.checked = true;
-                        toggleImageSource();
-                    }
-                };
-                
-                img.onerror = function() {
-                    console.error("Error loading the image");
-                    showToast('Eroare la încărcarea imaginii. Încearcă din nou sau selectează o imagine locală.', 'error');
-                };
-                
-                // Set the source last to start loading
-                img.src = url;
-            } else {
-                throw new Error('Eroare la încărcarea imaginii');
-            }
+            // Reset breed info for placeholder images
+            currentDogBreed = 'Random Dog';
+            
+            // Load the image directly - this avoids CORS issues
+            loadImageFromUrlWithFallback(localImageUrl);
+            
         } catch (error) {
             console.error('Error fetching dog image:', error);
             showToast('Eroare la încărcarea imaginii. Încearcă din nou sau selectează o imagine locală.', 'error');
@@ -261,22 +224,79 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Extract breed name from dog API URL
-     * @param {string} url - The dog image URL
-     * @returns {string} - The breed name
+     * Load image from URL with fallback for CORS issues
+     * @param {string} url - The image URL
      */
-    function extractBreedFromUrl(url) {
-        try {
-            // URLs are in format: https://images.dog.ceo/breeds/[breed]/[image].jpg
-            const parts = url.split('/');
-            const breedPart = parts[parts.length - 2];
+    function loadImageFromUrlWithFallback(url) {
+        originalImage = new Image();
+        
+        // Set up image load handler
+        originalImage.onload = function() {
+            // Success - process the image
+            displayAndPrepareImage();
+        };
+        
+        // Set up error handler
+        originalImage.onerror = function() {
+            console.error('Failed to load image from URL:', url);
+            showToast('Eroare la încărcarea imaginii. Încearcă din nou sau selectează o imagine locală.', 'error');
+        };
+        
+        // Set crossOrigin to Anonymous - this may help with some servers
+        originalImage.crossOrigin = 'Anonymous';
+        
+        // Start loading the image
+        originalImage.src = url;
+    }
+
+    /**
+     * Display the image in the canvas and prepare for processing
+     */
+    function displayAndPrepareImage() {
+        // Clear placeholders
+        originalPlaceholder.style.display = 'none';
+        processedPlaceholder.style.display = 'block';
+        
+        // Resize canvas to match image dimensions
+        const maxWidth = 800;
+        const maxHeight = 600;
+        
+        let width = originalImage.width;
+        let height = originalImage.height;
+        
+        // Scale down large images while maintaining aspect ratio
+        if (width > maxWidth || height > maxHeight) {
+            const aspectRatio = width / height;
             
-            // Format the breed name for display
-            return breedPart.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
-        } catch (error) {
-            return 'Unknown Breed';
+            if (width > maxWidth) {
+                width = maxWidth;
+                height = width / aspectRatio;
+            }
+            
+            if (height > maxHeight) {
+                height = maxHeight;
+                width = height * aspectRatio;
+            }
+        }
+        
+        // Set canvas dimensions
+        originalCanvas.width = width;
+        originalCanvas.height = height;
+        processedCanvas.width = width;
+        processedCanvas.height = height;
+        
+        // Draw the image on the original canvas
+        originalCtx.drawImage(originalImage, 0, 0, width, height);
+        
+        // Enable processing buttons
+        processButton.disabled = false;
+        resetButton.disabled = false;
+        
+        // Show success message
+        if (currentDogBreed) {
+            showToast(`Imagine încărcată cu succes: ${currentDogBreed}`, 'success');
+        } else {
+            showToast('Imagine încărcată cu succes', 'success');
         }
     }
 
@@ -298,79 +318,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const reader = new FileReader();
             
             reader.onload = function(event) {
-                loadImageFromUrl(event.target.result);
+                // Local files don't have CORS issues
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    displayAndPrepareImage();
+                };
+                originalImage.src = event.target.result;
             };
             
             reader.readAsDataURL(file);
         } else {
             fileName.textContent = 'Niciun fișier selectat';
         }
-    }
-
-    /**
-     * Load image from URL (remote or data URL)
-     * @param {string} url - The image URL
-     */
-    function loadImageFromUrl(url) {
-        // Create a new image object
-        originalImage = new Image();
-        
-        // Set up image load handler
-        originalImage.onload = function() {
-            // Clear placeholders
-            originalPlaceholder.style.display = 'none';
-            processedPlaceholder.style.display = 'block';
-            
-            // Resize canvas to match image dimensions
-            const maxWidth = 800;
-            const maxHeight = 600;
-            
-            let width = originalImage.width;
-            let height = originalImage.height;
-            
-            // Scale down large images while maintaining aspect ratio
-            if (width > maxWidth || height > maxHeight) {
-                const aspectRatio = width / height;
-                
-                if (width > maxWidth) {
-                    width = maxWidth;
-                    height = width / aspectRatio;
-                }
-                
-                if (height > maxHeight) {
-                    height = maxHeight;
-                    width = height * aspectRatio;
-                }
-            }
-            
-            // Set canvas dimensions
-            originalCanvas.width = width;
-            originalCanvas.height = height;
-            processedCanvas.width = width;
-            processedCanvas.height = height;
-            
-            // Draw the image on the original canvas
-            originalCtx.drawImage(originalImage, 0, 0, width, height);
-            
-            // Enable processing buttons
-            processButton.disabled = false;
-            resetButton.disabled = false;
-            
-            // Show success message
-            if (currentDogBreed) {
-                showToast(`Imagine încărcată cu succes: ${currentDogBreed}`, 'success');
-            } else {
-                showToast('Imagine încărcată cu succes', 'success');
-            }
-        };
-        
-        // Set up error handler
-        originalImage.onerror = function() {
-            showToast('Eroare la încărcarea imaginii. Formatul nu este suportat.', 'error');
-        };
-        
-        // Start loading the image
-        originalImage.src = url;
     }
 
     /**
