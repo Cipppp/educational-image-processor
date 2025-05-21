@@ -210,8 +210,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 const url = data.message;
                 currentDogBreed = extractBreedFromUrl(url);
                 
-                // Load the image
-                loadImageFromUrl(url);
+                // Instead of directly loading from the API URL, we'll draw to a canvas first
+                // This is a workaround for CORS issues
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // This may help with some servers
+                
+                img.onload = function() {
+                    // Create a temporary canvas to draw the image and convert it to data URL
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = img.width;
+                    tempCanvas.height = img.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // Draw the image to the temporary canvas
+                    tempCtx.drawImage(img, 0, 0);
+                    
+                    try {
+                        // Convert to data URL - this may fail if the image is from a different origin and doesn't have proper CORS headers
+                        const dataUrl = tempCanvas.toDataURL('image/png');
+                        
+                        // Load the data URL (which is now from the same origin)
+                        loadImageFromUrl(dataUrl);
+                    } catch (e) {
+                        console.error("CORS error when converting to data URL:", e);
+                        // Fallback: suggest using local image upload
+                        showToast('Nu s-a putut încărca imaginea din cauza restricțiilor de securitate a browserului. Vă rugăm să folosiți opțiunea de încărcare a unei imagini locale.', 'error');
+                        localFileRadio.checked = true;
+                        toggleImageSource();
+                    }
+                };
+                
+                img.onerror = function() {
+                    console.error("Error loading the image");
+                    showToast('Eroare la încărcarea imaginii. Încearcă din nou sau selectează o imagine locală.', 'error');
+                };
+                
+                // Set the source last to start loading
+                img.src = url;
             } else {
                 throw new Error('Eroare la încărcarea imaginii');
             }
@@ -359,49 +394,54 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Use setTimeout to allow the UI to update before starting intensive processing
         setTimeout(() => {
-            const startTime = performance.now();
-            
-            // Get the threshold value
-            const threshold = parseInt(thresholdSlider.value);
-            const showGradients = showGradientsCheckbox.checked;
-            const convertToGrayscaleFirst = grayscaleFirstCheckbox.checked;
-            
-            // Get the image data from the original canvas
-            const imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
-            
-            // Apply Sobel operator
-            const sobelResult = applySobelOperator(
-                imageData,
-                threshold,
-                showGradients,
-                convertToGrayscaleFirst
-            );
-            
-            // Draw the processed image data to the processed canvas
-            processedCtx.putImageData(sobelResult, 0, 0);
-            
-            // Save processed image data for downloading
-            processedImageData = sobelResult;
-            
-            // Calculate and display processing time
-            const endTime = performance.now();
-            const timeElapsed = endTime - startTime;
-            processingTime.textContent = `${timeElapsed.toFixed(2)} ms`;
-            
-            // Hide the placeholder for the processed image
-            processedPlaceholder.style.display = 'none';
-            
-            // Enable download and save buttons
-            downloadButton.disabled = false;
-            saveResultsButton.disabled = false;
-            
-            // Reset processing state
-            isProcessing = false;
-            processButton.disabled = false;
-            processButton.innerHTML = '<i class="fas fa-cogs"></i> Procesează Imaginea';
-            
-            // Show success message
-            showToast('Procesare finalizată cu succes!', 'success');
+            try {
+                const startTime = performance.now();
+                
+                // Get the threshold value
+                const threshold = parseInt(thresholdSlider.value);
+                const showGradients = showGradientsCheckbox.checked;
+                const convertToGrayscaleFirst = grayscaleFirstCheckbox.checked;
+                
+                // Get the image data from the original canvas
+                const imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
+                
+                // Apply Sobel operator
+                const sobelResult = applySobelOperator(
+                    imageData,
+                    threshold,
+                    showGradients,
+                    convertToGrayscaleFirst
+                );
+                
+                // Draw the processed image data to the processed canvas
+                processedCtx.putImageData(sobelResult, 0, 0);
+                
+                // Save processed image data for downloading
+                processedImageData = sobelResult;
+                
+                // Calculate and display processing time
+                const endTime = performance.now();
+                const timeElapsed = endTime - startTime;
+                processingTime.textContent = `${timeElapsed.toFixed(2)} ms`;
+                
+                // Hide the placeholder for the processed image
+                processedPlaceholder.style.display = 'none';
+                
+                // Enable download and save buttons
+                downloadButton.disabled = false;
+                saveResultsButton.disabled = false;
+                
+                // Show success message
+                showToast('Procesare finalizată cu succes!', 'success');
+            } catch (error) {
+                console.error('Error processing image:', error);
+                showToast('Eroare la procesarea imaginii: ' + error.message, 'error');
+            } finally {
+                // Reset processing state
+                isProcessing = false;
+                processButton.disabled = false;
+                processButton.innerHTML = '<i class="fas fa-cogs"></i> Procesează Imaginea';
+            }
         }, 100);
     }
 
