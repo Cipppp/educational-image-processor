@@ -1,0 +1,153 @@
+/* Global styles */
+:root {
+    --primary-color: #4285f4;
+    --primary-hover: #1a73e8;
+    --error-color: #ea4335;
+    --success-color: #34a853;
+    --warning-color: #fbbc05;
+    --dark-text: #202124;
+    --gray-text: #5f6368;
+    --light-gray: #e0e0e0;
+    --lighter-gray: #f1f3f4;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+    color: var(--dark-text);
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary-color);
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--primary-hover);
+}
+
+button {
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+input, button {
+    font-family: inherit;
+}
+
+/* Toast notification styles */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    min-width: 300px;
+    max-width: 400px;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(20px);
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.toast-content i {
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+.toast-content i.fa-check-circle {
+    color: var(--success-color);
+}
+
+.toast-content i.fa-exclamation-circle {
+    color: var(--error-color);
+}
+
+.toast-content i.fa-info-circle {
+    color: var(--primary-color);
+}
+
+.toast-message {
+    font-size: 14px;
+    color: var(--dark-text);
+    flex-grow: 1;
+}
+
+.toast-progress {
+    height: 4px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.toast-progress::before {
+    content: '';
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-color: var(--primary-color);
+    animation: progress 3s linear forwards;
+    transform: translateX(-100%);
+}
+
+@keyframes progress {
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Spinner animation */
+.spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+    .toast {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        min-width: auto;
+        max-width: none;
+    }
+}
